@@ -51,15 +51,38 @@ def calculate_similarity_scores(input_vector, data):
     
     return similarity_scores
 
-def content_recommendation(song_name, songs_data, transformed_data, k = 10):
+def content_recommendation(song_name,artist_name,songs_data, transformed_data, k=10):
+    """
+    Recommends top k songs similar to the given song based on content-based filtering.
+
+    Parameters:
+    song_name (str): The name of the song to base the recommendations on.
+    artist_name (str): The name of the artist of the song.
+    songs_data (DataFrame): The DataFrame containing song information.
+    transformed_data (ndarray): The transformed data matrix for similarity calculations.
+    k (int, optional): The number of similar songs to recommend. Default is 10.
+
+    Returns:
+    DataFrame: A DataFrame containing the top k recommended songs with their names, artists, and Spotify preview URLs.
+    """
+    # convert song name to lowercase
     song_name = song_name.lower()
-    song_row = songs_data.loc[songs_data['name'] == song_name]
+    # convert the artist name to lowercase
+    artist_name = artist_name.lower()
+    # filter out the song from data
+    song_row = songs_data.loc[(songs_data["name"] == song_name) & (songs_data["artist"] == artist_name)]
+    # get the index of song
     song_index = song_row.index[0]
-    input_vector = transformed_data[song_index]
-    similarity_scores = cosine_similarity(transformed_data, input_vector)
+    # generate the input vector
+    input_vector = transformed_data[song_index].reshape(1,-1)
+    # calculate similarity scores
+    similarity_scores = calculate_similarity_scores(input_vector, transformed_data)
+    # get the top k songs
     top_k_songs_indexes = np.argsort(similarity_scores.ravel())[-k-1:][::-1]
+    # get the top k songs names
     top_k_songs_names = songs_data.iloc[top_k_songs_indexes]
-    top_k_list = top_k_songs_names[['name', 'artist', 'spotify_preview_url']].reset_index(drop = True)
+    # print the top k songs
+    top_k_list = top_k_songs_names[['name','artist','spotify_preview_url']].reset_index(drop=True)
     return top_k_list
 
 def main(data_path):
